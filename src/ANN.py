@@ -11,10 +11,11 @@ weight = 2
 is_like_math = 3
 is_like_liter = 4
 is_like_sport = 5
-layer = [5, 5, 1]
+layer = [5, 5,6, 1]
 layer_len = len(layer)
 err = 0.1
 step = 1
+max_time=10000
 weight_map = {}
 out = {}
 
@@ -70,7 +71,7 @@ sheet = workbook.sheet_by_index(0)
 N = sheet.nrows - 1
 
 for i in range(1, len(layer)):
-    weight_map[i] = np.matrix(np.random.random((layer[i], layer[i - 1])))
+    weight_map[i] = 0.001*np.matrix(np.random.randn(layer[i], layer[i - 1]))
 data = [get_row(sheet, i) for i in range(1, N + 1)]
 data_len = len(data)
 i = 0
@@ -88,19 +89,25 @@ i = 0
 data_len = len(data)
 err_sum = err * data_len + 1
 err_list = []
+err_num=[]
 # 开始迭代
-while err_sum > err * data_len:
+while err_sum > err * data_len or i > max_time:
     i += 1
     r = fp(data[i % data_len, 1:], 1)
     bp(weight_map[layer_len - 1], out, 0, layer_len - 1, final_out=data[i % data_len, 0])
     err_sum = [np.abs(fp(data[j, 1:], 1) - data[j, 0]) for j in range(data_len)]
+    tmp=list(np.array(err_sum) > 0.5).count(True)
     if i % 100 == 0:
-        print(i, list(np.array(err_sum) > 0.5).count(True), np.sum(err_sum))
+        print(i,tmp , np.sum(err_sum))
+    err_num.append(tmp)
     err_sum = sum(err_sum)
     err_list.append(err_sum)
 
 m = [np.abs(fp(data[j, 1:], 1) - data[j, 0]) > 0.5 for j in range(data_len)]
 print(m.count(True))
+plt.subplot(211)
 plt.plot(err_list)
+plt.subplot(212)
+plt.plot(err_num)
 plt.show()
 # print([np.abs(fp(data[j, 1:], 1) - data[j, 0]) for j in range(len(data))])
